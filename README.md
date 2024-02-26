@@ -19,29 +19,51 @@ Step 7: Print the results.<br>
 
 ## Program :
 ```
-import numpy as np
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
-class BayesClassifier:
-  def __init__(self):
-    self.clf = GaussianNB()
-  def fit(self, X, y):
-    self.clf.fit(X, y)
-  def predict(self, X):
-    return self.clf.predict(X)
-ir = load_iris()
-X_train, X_test, y_train, y_test = train_test_split(ir.data, ir.target,test_size=0.33, random_state = 33)
-clf = BayesClassifier()
-clf.fit(X_train, y_train)
-y_pred = clf.predict(X_test)
-accu = accuracy_score(y_test, y_pred)
-print("Accuracy:",accu*100)
+#import required libraries
+
+from pgmpy.models import BayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+
+#define bayesian network structure
+
+network=BayesianNetwork([
+    ('Burglary','Alarm'),
+    ('Earthquake','Alarm'),
+    ('Alarm','JohnCalls'),
+    ('Alarm','MaryCalls')
+])
+
+#define the conditional probability distributions
+
+cpd_burglary = TabularCPD(variable='Burglary',variable_card=2,values=[[0.999],[0.001]])
+cpd_earthquake = TabularCPD(variable='Earthquake',variable_card=2,values=[[0.998],[0.002]])
+cpd_alarm = TabularCPD(variable ='Alarm',variable_card=2, values=[[0.999, 0.71, 0.06, 0.05],[0.001, 0.29, 0.94, 0.95]],evidence=['Burglary','Earthquake'],evidence_card=[2,2])
+cpd_john_calls = TabularCPD(variable='JohnCalls',variable_card=2,values=[[0.95,0.1],[0.05,0.9]],evidence=['Alarm'],evidence_card=[2])
+cpd_mary_calls = TabularCPD(variable='MaryCalls',variable_card=2,values=[[0.99,0.3],[0.01,0.7]],evidence=['Alarm'],evidence_card=[2])
+
+#Add CPDs to the network
+
+network.add_cpds(cpd_burglary,cpd_earthquake,cpd_alarm,cpd_john_calls,cpd_mary_calls)
+
+#Initialize the inference engine
+
+inference = VariableElimination(network)
+
+
+
+
+evidence ={'JohnCalls':1,'MaryCalls':0} #john called(1) and mary didn't call (0) as evidence
+query_variable ='Burglary'
+result = inference.query(variables=[query_variable],evidence=evidence)
+
+
+
+print(result)
 ```
 ## Output :
-![307518815-d359f6f0-cc6d-4e99-9211-f901126f861d](https://github.com/SETTY-POOJITHA-AI/Ex2---AAI/assets/93427581/b46acb3a-0963-4ebb-bca7-08ce63515e36)
-
+![1](https://github.com/SETTY-POOJITHA-AI/Ex2---AAI/assets/93427581/424b6174-51f0-4d94-b70c-0b4db3a80fae)
+![2](https://github.com/SETTY-POOJITHA-AI/Ex2---AAI/assets/93427581/01c073e6-a18e-4ff7-9967-59fecc7dbad3)
 
 ## Result :
 Thus, Bayesian Inference was successfully determined using Variable Elimination Method
